@@ -356,8 +356,18 @@ int jspon_get_values(char* json, size_t path_num, char** paths, char** bufs, siz
                         }
                         if (matching) {
                             cb_count = 0;
+                            bool rem_last_quote = false;
                             for(size_t k=i+1 ; k<stripped_len-1; ++k) {
                                 switch (sjson[k]) {
+                                    case '\'':
+                                    case '"':
+                                        if (k == i+1) {
+                                            rem_last_quote = true;
+                                            break;
+                                        }
+                                        val_buf[val_buf_ptr++] = sjson[k];
+                                        if (val_buf_ptr >= MAX_VAL_SIZE) val_buf_ptr=0;
+                                        break;
                                     case '{':
                                         ++cb_count;
                                         val_buf[val_buf_ptr++] = sjson[k];
@@ -370,6 +380,9 @@ int jspon_get_values(char* json, size_t path_num, char** paths, char** bufs, siz
                                         break;
                                     case ',':
                                         if (!cb_count) {
+                                            if (rem_last_quote && val_buf_ptr > 0) {
+                                                val_buf[--val_buf_ptr] = 0;
+                                            }
                                             strncpy(bufs[p],val_buf,buf_sizes[p]);
                                             k = stripped_len;
                                             break;
