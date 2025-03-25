@@ -24,7 +24,7 @@ int jspon_get_value(char* json, char* path, char* buf, size_t buf_size)
     for (size_t i=0; i<path_len; i++) {
         if (path[i] == '.') {
             path_stack[path_top] = malloc(MAX_ID_SIZE+1);
-            strcpy(path_stack[path_top], path_id_buf);
+            strncpy(path_stack[path_top], path_id_buf,MAX_ID_SIZE);
             ++path_top;
             while (path_id_buf_ptr > 0) { path_id_buf[--path_id_buf_ptr] = 0; }
             continue;
@@ -34,7 +34,7 @@ int jspon_get_value(char* json, char* path, char* buf, size_t buf_size)
     }
 
     path_stack[path_top] = malloc(MAX_ID_SIZE+1);
-    strcpy(path_stack[path_top], path_id_buf);
+    strncpy(path_stack[path_top], path_id_buf, MAX_ID_SIZE);
     
     size_t json_len = strlen(json);
     size_t stripped_len = json_len;
@@ -209,7 +209,7 @@ int jspon_get_values(char* json, size_t path_num, char** paths, char** bufs, siz
         for (size_t i=0; i<path_len; i++) {
             if (path[i] == '.') {
                 path_stacks[p][path_top] = malloc(MAX_ID_SIZE+1);
-                strcpy(path_stacks[p][path_top++], path_id_buf);
+                strncpy(path_stacks[p][path_top++], path_id_buf, MAX_ID_SIZE);
                 while (path_id_buf_ptr > 0) { path_id_buf[--path_id_buf_ptr] = 0; }
                 continue;
             }
@@ -219,11 +219,11 @@ int jspon_get_values(char* json, size_t path_num, char** paths, char** bufs, siz
         }
 
         path_stacks[p][path_top] = malloc(MAX_ID_SIZE+1);
-        strcpy(path_stacks[p][path_top], path_id_buf);
+        strncpy(path_stacks[p][path_top], path_id_buf, MAX_ID_SIZE);
     }
 
     size_t json_len = strlen(json);
-    size_t stripped_len = json_len;
+    size_t stripped_len = 0;
     bool apos_quotes = false;
     bool quotes = false;
     for (size_t i=0; i<json_len; ++i) {
@@ -237,15 +237,22 @@ int jspon_get_values(char* json, size_t path_num, char** paths, char** bufs, siz
                 if (!quotes)
                     apos_quotes = !apos_quotes;
                 ++stripped_len;
+                break;
             case ' ':
-                if (quotes || apos_quotes)
-                    break;
+                if (quotes || apos_quotes) {
+                    ++stripped_len;
+                }
             case '\n':
             case '\t':
-                --stripped_len;
+                break;
+            case '{':
+                ++stripped_len;
                 break;
             case '}':
                 ++stripped_len;
+            default:
+                ++stripped_len;
+                break;
         }
     }
     char* sjson = malloc(stripped_len+1);
@@ -327,17 +334,17 @@ int jspon_get_values(char* json, size_t path_num, char** paths, char** bufs, siz
                     apos_quotes = !apos_quotes;
                 break;
             case '{':
-               if (quotes || apos_quotes || arr) break;
+                if (quotes || apos_quotes || arr) break;
                 mod_val = false;
-                strcpy(stack[top++], id_buf);
+                strncpy(stack[top++], id_buf, MAX_ID_SIZE);
                 while (id_buf_ptr > 0) { id_buf[--id_buf_ptr] = 0; }
                 while (val_buf_ptr > 0) { val_buf[--val_buf_ptr] = 0; }
                 break;
             case '}':
-               if (quotes || apos_quotes || arr) break;
+                if (quotes || apos_quotes || arr) break;
                 --top;
             case ',':
-               if (quotes || apos_quotes || arr) break;
+                if (quotes || apos_quotes || arr) break;
                 mod_val = false;
                 while (id_buf_ptr > 0) { id_buf[--id_buf_ptr] = 0; }
                 while (val_buf_ptr > 0) { val_buf[--val_buf_ptr] = 0; }
@@ -360,7 +367,18 @@ int jspon_get_values(char* json, size_t path_num, char** paths, char** bufs, siz
                             for(size_t k=i+1 ; k<stripped_len-1; ++k) {
                                 switch (sjson[k]) {
                                     case '\'':
+                                        if (!quotes)
+                                            apos_quotes = !apos_quotes;
+                                        if (k == i+1) {
+                                            rem_last_quote = true;
+                                            break;
+                                        }
+                                        val_buf[val_buf_ptr++] = sjson[k];
+                                        if (val_buf_ptr >= MAX_VAL_SIZE) val_buf_ptr=0;
+                                        break;
                                     case '"':
+                                        if (!apos_quotes)
+                                            quotes = !quotes;
                                         if (k == i+1) {
                                             rem_last_quote = true;
                                             break;
@@ -369,16 +387,31 @@ int jspon_get_values(char* json, size_t path_num, char** paths, char** bufs, siz
                                         if (val_buf_ptr >= MAX_VAL_SIZE) val_buf_ptr=0;
                                         break;
                                     case '{':
+                                        if (quotes || apos_quotes) {
+                                            val_buf[val_buf_ptr++] = sjson[k];
+                                            if (val_buf_ptr >= MAX_VAL_SIZE) val_buf_ptr=0;
+                                            break;
+                                        }
                                         ++cb_count;
                                         val_buf[val_buf_ptr++] = sjson[k];
                                         if (val_buf_ptr >= MAX_VAL_SIZE) val_buf_ptr=0;
                                         break;
                                     case '}':
+                                        if (quotes || apos_quotes) {
+                                            val_buf[val_buf_ptr++] = sjson[k];
+                                            if (val_buf_ptr >= MAX_VAL_SIZE) val_buf_ptr=0;
+                                            break;
+                                        }
                                         --cb_count;
                                         --val_buf_ptr;
                                         val_buf[val_buf_ptr++] = sjson[k];
                                         break;
                                     case ',':
+                                        if (quotes || apos_quotes) {
+                                            val_buf[val_buf_ptr++] = sjson[k];
+                                            if (val_buf_ptr >= MAX_VAL_SIZE) val_buf_ptr=0;
+                                            break;
+                                        }
                                         if (!cb_count) {
                                             if (rem_last_quote && val_buf_ptr > 0) {
                                                 val_buf[--val_buf_ptr] = 0;
@@ -411,6 +444,7 @@ int jspon_get_values(char* json, size_t path_num, char** paths, char** bufs, siz
     }
     for (size_t p=0; p<path_num; ++p) {
         while (dot_counts[p] > 0) { free(path_stacks[p][dot_counts[p]--]); }
+        free(path_stacks[p][0]);
         free(path_stacks[p]);
     }
     free(path_stacks);
