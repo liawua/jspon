@@ -295,7 +295,6 @@ int jspon_get_values(char* json, size_t path_num, char** paths, char** bufs, siz
                 break;
         }
     }
-    printf("%s\n", sjson);
     char** stack = malloc(max_cb_count * sizeof(char*));
     for (size_t i=0; i<max_cb_count; ++i) {
         stack[i] = malloc(MAX_ID_SIZE+1);
@@ -346,8 +345,6 @@ int jspon_get_values(char* json, size_t path_num, char** paths, char** bufs, siz
             case ':':
                if (quotes || apos_quotes || arr) break;
                 // can be optimised
-                if (!strcmp(id_buf,"statistics"))
-                    printf("%s\n", id_buf);
                 for (size_t p=0; p<path_num; ++p) {
                     if (dot_counts[p] == top && !strcmp(id_buf,path_stacks[p][dot_counts[p]])) {
                         bool matching = true;
