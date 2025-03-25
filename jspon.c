@@ -162,13 +162,7 @@ int jspon_get_value(char* json, char* path, char* buf, size_t buf_size)
                                 break;
                             case ',':
                                 if (!cb_count) {
-                                    if (val_buf_ptr >= buf_size) {
-                                        while (path_top > 0) { free(path_stack[--path_top]); }
-                                        free(path_stack);
-                                        free(sjson);
-                                        return -2;
-                                    }
-                                    strcpy(buf,val_buf);
+                                    strncpy(buf,val_buf,buf_size);
                                     while (path_top > 0) { free(path_stack[--path_top]); }
                                     free(path_stack);
                                     free(sjson);
@@ -348,7 +342,7 @@ int jspon_get_values(char* json, size_t path_num, char** paths, char** bufs, siz
                                         break;
                                     case ',':
                                         if (!cb_count) {
-                                            strcpy(bufs[p],val_buf);
+                                            strncpy(bufs[p],val_buf,buf_sizes[p]);
                                             k = stripped_len;
                                             break;
                                         }
@@ -372,9 +366,13 @@ int jspon_get_values(char* json, size_t path_num, char** paths, char** bufs, siz
                 id_buf[id_buf_ptr++] = sjson[i];
         }
     }
-cleanup:
-    //while (path_top > 0) { free(path_stack[--path_top]); }
-    //free(path_stack);
-    //free(sjson);
+    for (size_t p=0; p<path_num; ++p) {
+        while (dot_counts[p] > 0) { free(path_stacks[p][dot_counts[p]--]); }
+        free(path_stacks[p]);
+    }
+    free(path_stacks);
+    while (top > 0) { free(stack[--top]); }
+    free(stack);
+    free(sjson);
     return 0;
 }
