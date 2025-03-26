@@ -44,11 +44,12 @@ int jspon_get_values(char* json, size_t path_num, char** paths, char** bufs, siz
         strncpy(path_stacks[p][path_top], path_id_buf, MAX_ID_SIZE);
     }
 
-    size_t json_len = strlen(json);
+    //size_t json_len = strlen(json);
     size_t stripped_len = 0;
     bool apos_quotes = false;
     bool quotes = false;
-    for (size_t i=0; i<json_len; ++i) {
+    size_t i=0;
+    while  (json[i] != 0) {
         switch (json[i]) {
             case '"':
                 if (!apos_quotes)
@@ -76,6 +77,7 @@ int jspon_get_values(char* json, size_t path_num, char** paths, char** bufs, siz
                 ++stripped_len;
                 break;
         }
+        ++i;
     }
     char* sjson = malloc(stripped_len+1);
     size_t cur_index = 0;
@@ -85,7 +87,8 @@ int jspon_get_values(char* json, size_t path_num, char** paths, char** bufs, siz
 
     apos_quotes = false;
     quotes = false;
-    for (size_t i=0; i <json_len; ++i) {
+    i = 0;
+    while  (json[i] != 0) {
         switch (json[i]) {
             case '"':
                 if (!apos_quotes)
@@ -123,6 +126,7 @@ int jspon_get_values(char* json, size_t path_num, char** paths, char** bufs, siz
                 ++cur_index;
                 break;
         }
+        ++i;
     }
     char** stack = malloc(max_cb_count * sizeof(char*));
     for (size_t i=0; i<max_cb_count; ++i) {
@@ -174,85 +178,129 @@ int jspon_get_values(char* json, size_t path_num, char** paths, char** bufs, siz
             case ':':
                if (quotes || apos_quotes || arr) break;
                 // can be optimised
+                bool stack_match = true;
+                bool any_match = false;
                 for (size_t p=0; p<path_num; ++p) {
-                    if (dot_counts[p] == top && !strcmp(id_buf,path_stacks[p][dot_counts[p]])) {
-                        bool matching = true;
-                        for (size_t j=0; j<top && j<dot_counts[p]; ++j) {
-                            if (strcmp(path_stacks[p][j], stack[j])) {
-                                matching = false;
-                                break;
-                            }
-                        }
-                        if (matching) {
-                            cb_count = 0;
-                            bool rem_last_quote = false;
-                            for(size_t k=i+1 ; k<stripped_len-1; ++k) {
-                                switch (sjson[k]) {
-                                    case '\'':
-                                        if (!quotes)
-                                            apos_quotes = !apos_quotes;
-                                        if (k == i+1) {
-                                            rem_last_quote = true;
-                                            break;
-                                        }
-                                        val_buf[val_buf_ptr++] = sjson[k];
-                                        if (val_buf_ptr >= MAX_VAL_SIZE) val_buf_ptr=0;
-                                        break;
-                                    case '"':
-                                        if (!apos_quotes)
-                                            quotes = !quotes;
-                                        if (k == i+1) {
-                                            rem_last_quote = true;
-                                            break;
-                                        }
-                                        val_buf[val_buf_ptr++] = sjson[k];
-                                        if (val_buf_ptr >= MAX_VAL_SIZE) val_buf_ptr=0;
-                                        break;
-                                    case '{':
-                                        if (quotes || apos_quotes) {
-                                            val_buf[val_buf_ptr++] = sjson[k];
-                                            if (val_buf_ptr >= MAX_VAL_SIZE) val_buf_ptr=0;
-                                            break;
-                                        }
-                                        ++cb_count;
-                                        val_buf[val_buf_ptr++] = sjson[k];
-                                        if (val_buf_ptr >= MAX_VAL_SIZE) val_buf_ptr=0;
-                                        break;
-                                    case '}':
-                                        if (quotes || apos_quotes) {
-                                            val_buf[val_buf_ptr++] = sjson[k];
-                                            if (val_buf_ptr >= MAX_VAL_SIZE) val_buf_ptr=0;
-                                            break;
-                                        }
-                                        --cb_count;
-                                        --val_buf_ptr;
-                                        val_buf[val_buf_ptr++] = sjson[k];
-                                        break;
-                                    case ',':
-                                        if (quotes || apos_quotes) {
-                                            val_buf[val_buf_ptr++] = sjson[k];
-                                            if (val_buf_ptr >= MAX_VAL_SIZE) val_buf_ptr=0;
-                                            break;
-                                        }
-                                        if (!cb_count) {
-                                            if (rem_last_quote && val_buf_ptr > 0) {
-                                                val_buf[--val_buf_ptr] = 0;
-                                            }
-                                            strncpy(bufs[p],val_buf,buf_sizes[p]);
-                                            found[p] = true;
-                                            k = stripped_len;
-                                            break;
-                                        }
-                                    default:
-                                        val_buf[val_buf_ptr++] = sjson[k];
-                                        if (val_buf_ptr >= MAX_VAL_SIZE) val_buf_ptr=0;
-                                        break;
-
-                                }
-                            }
+                    bool matching = true;
+                    for (size_t j=0; j<top && j<dot_counts[p]; ++j) {
+                        if (strcmp(path_stacks[p][j], stack[j])) {
+                            matching = false;
                             break;
                         }
                     }
+                    if (!matching) {
+                        continue;
+                    }
+                    any_match = true;
+                    if (dot_counts[p] != top || strcmp(id_buf,path_stacks[p][dot_counts[p]])) {
+                        continue;
+                    }
+                    cb_count = 0;
+                    bool rem_last_quote = false;
+                    for(size_t k=i+1 ; k<stripped_len-1; ++k) {
+                        switch (sjson[k]) {
+                            case '\'':
+                                if (!quotes)
+                                    apos_quotes = !apos_quotes;
+                                if (k == i+1) {
+                                    rem_last_quote = true;
+                                    break;
+                                }
+                                val_buf[val_buf_ptr++] = sjson[k];
+                                if (val_buf_ptr >= MAX_VAL_SIZE) val_buf_ptr=0;
+                                break;
+                            case '"':
+                                if (!apos_quotes)
+                                    quotes = !quotes;
+                                if (k == i+1) {
+                                    rem_last_quote = true;
+                                    break;
+                                }
+                                val_buf[val_buf_ptr++] = sjson[k];
+                                if (val_buf_ptr >= MAX_VAL_SIZE) val_buf_ptr=0;
+                                break;
+                            case '{':
+                                if (quotes || apos_quotes) {
+                                    val_buf[val_buf_ptr++] = sjson[k];
+                                    if (val_buf_ptr >= MAX_VAL_SIZE) val_buf_ptr=0;
+                                    break;
+                                }
+                                ++cb_count;
+                                val_buf[val_buf_ptr++] = sjson[k];
+                                if (val_buf_ptr >= MAX_VAL_SIZE) val_buf_ptr=0;
+                                break;
+                            case '}':
+                                if (quotes || apos_quotes) {
+                                    val_buf[val_buf_ptr++] = sjson[k];
+                                    if (val_buf_ptr >= MAX_VAL_SIZE) val_buf_ptr=0;
+                                    break;
+                                }
+                                --cb_count;
+                                --val_buf_ptr;
+                                val_buf[val_buf_ptr++] = sjson[k];
+                                break;
+                            case ',':
+                                if (quotes || apos_quotes) {
+                                    val_buf[val_buf_ptr++] = sjson[k];
+                                    if (val_buf_ptr >= MAX_VAL_SIZE) val_buf_ptr=0;
+                                    break;
+                                }
+                                if (!cb_count) {
+                                    if (rem_last_quote && val_buf_ptr > 0) {
+                                        val_buf[--val_buf_ptr] = 0;
+                                    }
+                                    strncpy(bufs[p],val_buf,buf_sizes[p]);
+                                    found[p] = true;
+                                    k = stripped_len;
+                                    break;
+                                }
+                            default:
+                                val_buf[val_buf_ptr++] = sjson[k];
+                                if (val_buf_ptr >= MAX_VAL_SIZE) val_buf_ptr=0;
+                                break;
+
+                            }
+                        }
+                        break;
+                }
+                if (!any_match) {
+                    cb_count = 0;
+                    for (; i<stripped_len-1; ++i) {
+                        printf("%c",sjson[i]);
+                        switch (sjson[i]) {
+                            printf("%c\n", sjson[i]);
+                            case '\'':
+                                if (!quotes)
+                                    apos_quotes = !apos_quotes;
+                                break;
+                            case '"':
+                                if (!apos_quotes)
+                                    quotes = !quotes;
+                                break;
+                            case '[':
+                                if (quotes || apos_quotes) break;
+                                arr = true;
+                                break;
+                            case ']':
+                                if (quotes || apos_quotes) break;
+                                arr = false;
+                                break;
+                            case '{':
+                                if (quotes || apos_quotes || arr) break;
+                                ++cb_count;
+                            case '}':
+                                if (quotes || apos_quotes || arr) break;
+                                --cb_count;
+                                break;
+                            case ',':
+                                if (quotes || apos_quotes || arr) break;
+                                if (!cb_count) {
+                                    break;
+                                }
+                        }
+                    }
+                    printf("\n");
+                    break;
                 }
                 mod_val = true;
                 break;
