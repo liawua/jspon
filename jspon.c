@@ -44,7 +44,6 @@ int jspon_get_values(char* json, size_t path_num, char** paths, char** bufs, siz
         strncpy(path_stacks[p][path_top], path_id_buf, MAX_ID_SIZE);
     }
 
-    //size_t json_len = strlen(json);
     size_t stripped_len = 0;
     bool apos_quotes = false;
     bool quotes = false;
