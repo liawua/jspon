@@ -329,3 +329,140 @@ int jspon_get_values(char* json, size_t path_num, char** paths, char** bufs, siz
     free(sjson);
     return ret_val;
 }
+
+size_t jspon_get_array_size(char* json)
+{
+    size_t size = 0;
+    bool quotes = false;
+    bool apos_quotes = false;
+    bool data = false;
+    int arr = 0;
+    int cb_count = 0;
+
+    size_t i = 1;
+    while(json[i]) {
+        switch(json[i]) {
+            case ' ':
+            case '\n':
+            case '\t':
+                break;
+            case '\'':
+                if (!quotes) apos_quotes = !apos_quotes;
+                break;
+            case '"':
+                if (!apos_quotes) quotes = !quotes;
+                break;
+            case '[':
+                if (quotes || apos_quotes) break;
+                ++arr;
+                break;
+            case ']':
+                if (quotes || apos_quotes) break;
+                --arr;
+                break;
+            case '{':
+                if (quotes || apos_quotes || arr) break;
+                ++cb_count;
+                break;
+            case '}':
+                if (quotes || apos_quotes || arr) break;
+                --cb_count;
+                break;
+            case ',':
+                if (quotes || apos_quotes || arr || cb_count) break;
+                ++size;
+                break;
+            default:
+                data = true;
+                break;
+
+        }
+        ++i;
+    }
+    if (data) ++size;
+    return size;
+}
+
+int jspon_parse_array(char* json, size_t arr_size, size_t buf_size, char** bufs)
+{
+    size_t i = 1;
+    size_t buf_ptr = 0;
+    size_t buf_index = 0;
+    int arr = 0;
+    int cb_count = 0;
+    bool quotes = false;
+    bool apos_quotes = false;
+    while (json[i]) {
+        printf("%c\n", json[i]);
+        switch(json[i]) {
+            case ' ':
+            case '\n':
+            case '\t':
+                break;
+            case '\'':
+                if (!quotes) apos_quotes = !apos_quotes;
+                else {
+                    if (buf_ptr >= buf_size) buf_ptr = 0;
+                    bufs[buf_index][buf_ptr++] = json[i];
+                    break;
+                }
+                break;
+            case '"':
+                if (!apos_quotes) quotes = !quotes;
+                else {
+                    if (buf_ptr >= buf_size) buf_ptr = 0;
+                    bufs[buf_index][buf_ptr++] = json[i];
+                    break;
+                }
+                break;
+            case '[':
+                if (buf_ptr >= buf_size) buf_ptr = 0;
+                bufs[buf_index][buf_ptr++] = json[i];
+                if (quotes || apos_quotes) break;
+                ++arr;
+                break;
+            case ']':
+                if (quotes || apos_quotes || arr == 0) break;
+                if (buf_ptr >= buf_size) buf_ptr = 0;
+                bufs[buf_index][buf_ptr++] = json[i];
+                --arr;
+                break;
+            case '{':
+                if (buf_ptr >= buf_size) buf_ptr = 0;
+                bufs[buf_index][buf_ptr++] = json[i];
+                if (quotes || apos_quotes || arr) break;
+                ++cb_count;
+                break;
+            case '}':
+                if (buf_ptr >= buf_size) buf_ptr = 0;
+                bufs[buf_index][buf_ptr++] = json[i];
+                if (quotes || apos_quotes || arr) break;
+                --cb_count;
+                break;
+            case ',':
+                if (quotes || apos_quotes || arr || cb_count) {
+                    if (buf_ptr >= buf_size) buf_ptr = 0;
+                    bufs[buf_index][buf_ptr++] = json[i];
+                    break;
+                }
+                bufs[buf_index][buf_ptr] = 0;
+                buf_ptr = 0;
+                if (++buf_index >= arr_size) {
+                    return -1;
+                }
+                break;
+            default:
+                if (buf_ptr >= buf_size) buf_ptr = 0;
+                bufs[buf_index][buf_ptr++] = json[i];
+                break;
+        }
+        ++i;
+    }
+    bufs[buf_index][buf_ptr] = 0;
+    return 0;
+}
+
+int jspon_get_array_values(char* json, size_t num_indexes, size_t indexes[], char** bufs)
+{
+    return 0;
+}
