@@ -447,11 +447,9 @@ int jspon_parse_array(char* json, size_t arr_size, size_t buf_size, char** bufs)
     bool quotes = false;
     bool apos_quotes = false;
     while (json[i]) {
-        printf("%c",json[i]);
         switch(json[i]) {
             case ' ':
                 if (!quotes && !apos_quotes) break;
-                printf("\nboom\n");
                 if (buf_ptr >= buf_size) buf_ptr = 0;
                 bufs[buf_index][buf_ptr++] = json[i];
             case '\n':
