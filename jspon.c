@@ -29,16 +29,16 @@ int jspon_get_values(char* json, size_t path_num, char** paths, char** bufs, siz
         path_stacks[p][path_top] = malloc(MAX_ID_SIZE+1);
         for (size_t i=0; i<path_len; ++i) {
             if (path[i] == '.') {
-                //strncpy(path_stacks[p][path_top++], path_id_buf, MAX_ID_SIZE);
-                ++path_top;
+                path_stacks[p][path_top++][path_id_buf_ptr] = 0;
                 path_id_buf_ptr = 0;
                 path_stacks[p][path_top] = malloc(MAX_ID_SIZE+1);
                 continue;
             }
             path_stacks[p][path_top][path_id_buf_ptr] = path[i];
             ++path_id_buf_ptr;
-            if (path_id_buf_ptr >= MAX_ID_SIZE) return -3;
+            if (path_id_buf_ptr > MAX_ID_SIZE) return -3;
         }
+        path_stacks[p][path_top++][path_id_buf_ptr] = 0;
     }
 
     size_t stripped_len = 0;
@@ -171,7 +171,7 @@ int jspon_get_values(char* json, size_t path_num, char** paths, char** bufs, siz
             case ':':
                 if (quotes || apos_quotes || arr) break;
                 mod_val = true;
-                //printf("COLON:\n");
+                //printf("COLON: %s\n", id_buf);
                 // can be optimised
                 bool stack_match = true;
                 bool any_match = false;
@@ -191,6 +191,7 @@ int jspon_get_values(char* json, size_t path_num, char** paths, char** bufs, siz
                     any_match = true;
 
                     if (dot_counts[p] != top || strcmp(id_buf,path_stacks[p][dot_counts[p]])) {
+                        //printf("sorry.. %d %d %s %s\n",dot_counts[p], top, id_buf,path_stacks[p][dot_counts[p]]);
                         continue;
                     }
                     //printf("MATCH FOUND\n");
