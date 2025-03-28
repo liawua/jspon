@@ -64,11 +64,6 @@ int jspon_get_values(char* json, size_t path_num, char** paths, char** bufs, siz
             case '\n':
             case '\t':
                 break;
-            case '{':
-                ++stripped_len;
-                break;
-            case '}':
-                ++stripped_len;
             default:
                 ++stripped_len;
                 break;
@@ -115,8 +110,8 @@ int jspon_get_values(char* json, size_t path_num, char** paths, char** bufs, siz
                 break;
             case '}':
                 --cb_count;
-                sjson[cur_index] = ',';
-                ++cur_index;
+                //sjson[cur_index] = ',';
+                //++cur_index;
             default:
                 sjson[cur_index] = json[i];
                 ++cur_index;
@@ -136,12 +131,12 @@ int jspon_get_values(char* json, size_t path_num, char** paths, char** bufs, siz
     apos_quotes = false;
     quotes = false;
     int arr = 0;
-    int print_next = 0;
+    //int print_next = 0;
     for (size_t i=1; i<stripped_len-1; ++i) {
-        if (print_next) {
-            --print_next;
+        //if (print_next) {
+            //--print_next;
             //printf("stuff: %c %d\n", sjson[i], i);
-        }
+        //}
         switch (sjson[i]) {
             case '[':
                 if (!quotes && !apos_quotes)
@@ -169,6 +164,8 @@ int jspon_get_values(char* json, size_t path_num, char** paths, char** bufs, siz
                 if (quotes || apos_quotes || arr) break;
                 --top;
                 //printf("\n--top\n");
+                mod_val = false;
+                while (id_buf_ptr > 0) { id_buf[--id_buf_ptr] = 0; }
                 break;
             case ',':
                 if (quotes || apos_quotes || arr) break;
@@ -258,6 +255,17 @@ int jspon_get_values(char* json, size_t path_num, char** paths, char** bufs, siz
                                     if (val_buf_ptr >= buf_sizes[p]) val_buf_ptr=0;
                                     break;
                                 }
+                                if (!colon_cb_count) {
+                                    bufs[p][val_buf_ptr] = 0;
+                                    if (rem_last_quote && val_buf_ptr > 0) {
+                                        bufs[p][--val_buf_ptr] = 0;
+                                    }
+                                    val_buf_ptr = 0;
+                                    //printf("val_buf: %s %zu\n", bufs[p],p);
+                                    found[p] = true;
+                                    k = stripped_len;
+                                    break;
+                                }
                                 --colon_cb_count;
                                 --val_buf_ptr;
                                 bufs[p][val_buf_ptr++] = sjson[k];
@@ -321,6 +329,14 @@ int jspon_get_values(char* json, size_t path_num, char** paths, char** bufs, siz
                             break;
                         case '}':
                             if (quotes || apos_quotes || colon_arr) break;
+                            if (!colon_cb_count) {
+                                --top;
+                                --i;
+                                //printf("\nbreak %d %d %d %c %d\n", quotes, apos_quotes, arr, sjson[i], i);
+                                //print_next = 4;
+                                cont = false;
+                                break;
+                            }
                             --colon_cb_count;
                             break;
                         case ',':
@@ -330,7 +346,7 @@ int jspon_get_values(char* json, size_t path_num, char** paths, char** bufs, siz
                                 --top;
                                 --i;
                                 //printf("\nbreak %d %d %d %c %d\n", quotes, apos_quotes, arr, sjson[i], i);
-                                print_next = 4;
+                                //print_next = 4;
                                 cont = false;
                                 break;
                             }
