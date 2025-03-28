@@ -119,7 +119,6 @@ int jspon_get_values(char* json, size_t path_num, char** paths, char** bufs, siz
         }
         ++i;
     }
-    printf("\n\n%s\n\n", sjson);
     char** stack = malloc(max_cb_count * sizeof(char*));
     for (size_t i=0; i<max_cb_count; ++i) {
         stack[i] = malloc(MAX_ID_SIZE+1);
