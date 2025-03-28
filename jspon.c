@@ -204,7 +204,7 @@ int jspon_get_values(char* json, size_t path_num, char** paths, char** bufs, siz
                     int colon_cb_count = 0;
                     int colon_arr = 0;
                     bool rem_last_quote = false;
-                    for(size_t k=i+1 ; k<stripped_len-1; ++k) {
+                    for(size_t k=i+1 ; k<stripped_len; ++k) {
                         //printf("finding val: %c %d %d %d %d\n", sjson[k], quotes, apos_quotes, colon_arr, colon_cb_count);
                         switch (sjson[k]) {
                             case '\'':
