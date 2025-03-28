@@ -269,6 +269,7 @@ int jspon_get_values(char* json, size_t path_num, char** paths, char** bufs, siz
                                     break;
                                 }
                                 if (!colon_cb_count) {
+                                    bufs[p][val_buf_ptr] = 0;
                                     if (rem_last_quote && val_buf_ptr > 0) {
                                         bufs[p][--val_buf_ptr] = 0;
                                     }
