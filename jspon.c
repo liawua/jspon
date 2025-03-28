@@ -119,6 +119,7 @@ int jspon_get_values(char* json, size_t path_num, char** paths, char** bufs, siz
         }
         ++i;
     }
+    printf("\n\n%s\n\n", sjson);
     char** stack = malloc(max_cb_count * sizeof(char*));
     for (size_t i=0; i<max_cb_count; ++i) {
         stack[i] = malloc(MAX_ID_SIZE+1);
@@ -446,26 +447,29 @@ int jspon_parse_array(char* json, size_t arr_size, size_t buf_size, char** bufs)
     bool quotes = false;
     bool apos_quotes = false;
     while (json[i]) {
+        printf("%c",json[i]);
         switch(json[i]) {
             case ' ':
+                if (!quotes && !apos_quotes) break;
+                printf("\nboom\n");
+                if (buf_ptr >= buf_size) buf_ptr = 0;
+                bufs[buf_index][buf_ptr++] = json[i];
             case '\n':
             case '\t':
                 break;
             case '\'':
                 if (!quotes) apos_quotes = !apos_quotes;
-                else {
-                    if (buf_ptr >= buf_size) buf_ptr = 0;
-                    bufs[buf_index][buf_ptr++] = json[i];
-                    break;
-                }
+                if (!cb_count && !arr) break;
+                if (buf_ptr >= buf_size) buf_ptr = 0;
+                bufs[buf_index][buf_ptr++] = json[i];
+                break;
                 break;
             case '"':
                 if (!apos_quotes) quotes = !quotes;
-                else {
-                    if (buf_ptr >= buf_size) buf_ptr = 0;
-                    bufs[buf_index][buf_ptr++] = json[i];
-                    break;
-                }
+                if (!cb_count && !arr) break;
+                if (buf_ptr >= buf_size) buf_ptr = 0;
+                bufs[buf_index][buf_ptr++] = json[i];
+                break;
                 break;
             case '[':
                 if (buf_ptr >= buf_size) buf_ptr = 0;
