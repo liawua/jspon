@@ -132,7 +132,7 @@ int jspon_get_values(char* json, size_t path_num, char** paths, char** bufs, siz
     quotes = false;
     int arr = 0;
     //int print_next = 0;
-    for (size_t i=1; i<stripped_len-1; ++i) {
+    for (size_t i=1; i+1<stripped_len; ++i) {
         //if (print_next) {
             //--print_next;
             //printf("stuff: %c %d\n", sjson[i], i);
