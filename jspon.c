@@ -514,8 +514,3 @@ int jspon_parse_array(char* json, size_t arr_size, size_t buf_size, char** bufs)
     bufs[buf_index][buf_ptr] = 0;
     return 0;
 }
-
-int jspon_get_array_values(char* json, size_t num_indexes, size_t indexes[], char** bufs)
-{
-    return 0;
-}
