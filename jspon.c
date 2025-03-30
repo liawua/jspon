@@ -36,7 +36,7 @@ int jspon_get_values(char* json, size_t path_num, char** paths, char** bufs, siz
             }
             path_stacks[p][path_top][path_id_buf_ptr] = path[i];
             ++path_id_buf_ptr;
-            if (path_id_buf_ptr > MAX_ID_SIZE) return -3;
+            if (path_id_buf_ptr > MAX_ID_SIZE) return -2;
         }
         path_stacks[p][path_top++][path_id_buf_ptr] = 0;
     }
