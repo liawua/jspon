@@ -1,5 +1,5 @@
 # jspon
-Lightweight JSON parser in C.
+A lightweight JSON parser wrtten in C.
 
 ## DISCLAIMER
 This is a personal project, the security of this project has not been audited and therefore should not be used to parse untrusted data. I have done my best to prevent any this, however I cannot ensure 100% reliability. If you are looking for a secure, fast, and well tested library, I would recommend [cJSON](https://github.com/DaveGamble/cJSON).
@@ -20,8 +20,9 @@ jspon is a very simple library to use, only containing three functions.
 This function takes a JSON string, a list of paths and a list of buffers. The value found at each path is written to the corresponding buffer. Paths should be in the format `"item.subitem.value"`. All values are treated as strings when being written to the buffer.
 
 ### Example
+
+**main.c:**
 ```c
-main.c:
 int main()
 {
     char content[65536];
@@ -50,19 +51,21 @@ int main()
 	return ret_val;
 }
 ```
+
+**example.json:**
 ```json
-example.json:
 {
     "val1": 123,
     "nested": {
-        1: "one",
-        2: "two",
-        3: "three"
+        "1": "one",
+        "2": "two",
+        "3": "three"
     }
 }
 ```
+
+**output:**
 ```
-output:
 123
 two
 {1:"one",2:"two",3:"three"}
@@ -71,9 +74,10 @@ two
  #### ```size_t jspon_get_array_size(char* json)```
  
  This function takes a string of a JSON array, and returns the number of elements in the array.
-### Example 
+### Example
+
+**main.c:**
 ```c
-main.c:
 int main()
 {
 	char* json = "[0,1,2,{'val1':3,'val2':4},'string']";
@@ -81,8 +85,9 @@ int main()
 	return 0;
 }
 ```
+
+**output:**
 ```
-output:
 5
 ```
 ---
@@ -93,8 +98,9 @@ output:
 
 This function takes a string of JSON, and a list of buffers, and writes each item in the array to each of the buffers.
 ### Example
+
+**main.c:**
 ```c
-main.c:
 int main()
 {
 	char* json = "[0,1,2,{'val1':3,'val2':4},'string']";
@@ -114,8 +120,9 @@ int main()
 	return ret_val;
 }
 ```
+
+**output:**
 ```
-output:
 0
 1
 2
@@ -123,10 +130,16 @@ output:
 string
 ```
 ## Building
-I have provided no build tools for jspon since it is a very simple library. It has no dependencies and can easily be statically compiled with any C compiler with your code.
-```gcc jspon.c main.c -o main```
+I have provided no build tools for jspon since it is a very simple library. It has no dependencies and can easily be statically compiled with any C compiler alongside your code.  
+```
+gcc jspon.c main.c -o main
+```
 
-You could also compile it dynamically.
-```gcc -shared jspon.c libjspon.so```
+
+You could also compile it dynamically.  
+```
+gcc -shared jspon.c libjspon.so
+```
+
 
 These build examples are designed for POSIX based systems.
