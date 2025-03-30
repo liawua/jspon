@@ -252,7 +252,6 @@ int jspon_get_values(char* json, size_t path_num, char** paths, char** bufs, siz
                                     break;
                                 }
                                 --colon_cb_count;
-                                --val_buf_ptr;
                                 bufs[p][val_buf_ptr++] = sjson[k];
                                 break;
                             case ',':
