@@ -336,7 +336,7 @@ int jspon_get_values(char* json, size_t path_num, char** paths, char** bufs, siz
                     break;
                 }
                 id_buf[id_buf_ptr++] = sjson[i];
-                if (id_buf_ptr >= MAX_ID_SIZE) id_buf_ptr=0;
+                if (id_buf_ptr >= MAX_ID_SIZE) id_buf_ptr=MAX_ID_SIZE-1;
         }
     }
 
